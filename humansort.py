@@ -99,6 +99,8 @@ def main():
 
 
 if __name__ == '__main__':
+    main()
+    """
     avg = 0
     for i in range(100):
         main()
@@ -106,3 +108,4 @@ if __name__ == '__main__':
         t = 0
     avg /= 100
     print(avg)
+    """
