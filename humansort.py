@@ -5,7 +5,7 @@ t = 0
 def getChoice(op1, op2):
     """ Returns True for op1, False for op2 """
     #return cs([True, False])
-    return [op2, op1] == sorted([op1, op2])
+    #return [op2, op1] == sorted([op1, op2])
     let1 = op1[0]
     let2 = op2[0]
 
@@ -22,8 +22,8 @@ def getChoice(op1, op2):
 
 
 def merge(lists, idx1, idx2):
-    """ Merges lists[idx1] and lists[idx2]. List 2 will be removed from items,
-        List 1 will hold the merged result.
+    """ Merges lists[idx1] and lists[idx2]. Both lists are removed from items,
+        returns the merged result.
         Assumes lists are ordered best to worst. """
     global t
     l1 = lists[idx1]
@@ -64,8 +64,9 @@ def merge(lists, idx1, idx2):
     elif l2:
         topList.extend(l2)
 
-    lists[idx1] = topList + botList[::-1]
     lists.pop(idx2)
+    lists.pop(idx1)
+    return topList + botList[::-1]
 
 
 def main():
@@ -82,11 +83,15 @@ def main():
     # Get lists down to a power of 2
     i = 0
     while len(lists) > pow2:
-        merge(lists, i, i+1)
+        lists.append(merge(lists, i, i+1))
 
+    newLists = []
     while len(lists) > 1:
-        lists.sort(key=len)     # TODO: I think this needs to be more robust - have a list move up a tier after being merged
-        merge(lists, 0, 1)
+        while len(lists) > 1:
+            lists.sort(key=len)
+            newLists.append(merge(lists, 0, len(lists)-1))
+        lists = newLists
+        newLists = []
 
     with open('output.txt', 'w+') as outfile:
         for i in lists[0]:
