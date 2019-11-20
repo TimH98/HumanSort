@@ -67,7 +67,7 @@ class HumanSort:
         done = False
         while not done:
             x = 0
-            y = 1
+            y = 0
             while x == y or self.comps[x][y] != 0:
                 x = randint(0, len(self.items)-1)
                 y = randint(0, len(self.items)-1)
