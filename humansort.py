@@ -1,4 +1,4 @@
-from random import shuffle, choice as cs
+from random import shuffle, randint
 
 t = 0
 
@@ -98,8 +98,77 @@ def main():
             outfile.write(i + '\n')
 
 
+class HumanSort:
+    def __init__(self):
+        choice = ''
+        while choice not in ['l', 'n']:
+            choice = input('[L]oad or [N]ew? ').lower()
+
+        self.items = []
+        self.comps = []
+
+        if choice == 'l':
+            self.load()
+        else:
+            fname = input('Input file name: ')
+            self.items = [line.strip('\n') for line in open(fname)]
+            for i in range(len(self.items)):
+                self.comps.append([0]*len(self.items))
+
+        self.sort()
+
+    def load(self):
+        """
+        File structure:
+        <number of items>
+        <items, one per line>
+        <array of comps, items separated by spaces, rows separated by newlines>
+        :return:
+        """
+
+    def sort(self):
+        done = False
+        while not done:
+            x = 0
+            y = 1
+            while x == y or self.comps[x][y] != 0:
+                x = randint(0, len(self.items))
+                y = randint(0, len(self.items))
+
+            high = self.getChoice(x, y)
+            low = [x, y].remove(high)[0]
+            
+
+
+    def getChoice(self, x, y):
+        """ Returns x, y, or save
+            x and y are integers, indexes into the items list
+        """
+        op1 = self.items[x]
+        op2 = self.items[y]
+        let1 = op1[0].lower()
+        let2 = op2[0].lower()
+
+        i = 0
+        while (let1 == let2):
+            i += 1
+            let2 = op2[i].lower()
+
+        c = None
+        while c.lower() not in [let1, let2, 'save']:
+            c = input('[' + let1 + '] ' + op1 + ' or [' + let2 + '] ' + op2)
+
+        if c.lower() == let1:
+            return x
+        elif c.lower() == let2:
+            return y
+        else:
+            return c
+
+
 if __name__ == '__main__':
-    main()
+    hs = HumanSort()
+    #main()
     """
     avg = 0
     for i in range(100):
