@@ -1,111 +1,139 @@
-from random import shuffle, choice as cs
-
-t = 0
-
-def getChoice(op1, op2):
-    """ Returns True for op1, False for op2 """
-    #return cs([True, False])
-    #return [op2, op1] == sorted([op1, op2])
-    let1 = op1[0]
-    let2 = op2[0]
-
-    i = 0
-    while (let1 == let2):
-        i += 1
-        let2 = op2[i]
-
-    c = None
-    while c != let1 and c != let2 and c != 'UNDO':
-        c = input('[' + let1 + '] ' + op1 + ' or [' + let2 + '] ' + op2)
-
-    return c == let1
+from random import shuffle, randint
 
 
-def merge(lists, idx1, idx2):
-    """ Merges lists[idx1] and lists[idx2]. Both lists are removed from items,
-        returns the merged result.
-        Assumes lists are ordered best to worst. """
-    global t
-    l1 = lists[idx1]
-    l2 = lists[idx2]
+class HumanSort:
+    """
+    self.comps[x][y] =
+        -1 if x < y
+        1 if x > y
+    """
+    def __init__(self):
+        choice = ''
+        while choice not in ['l', 'n']:
+            choice = input('[L]oad or [N]ew? ').lower()
 
-    topList = []
-    botList = []    # NOTE: botList is reversed - sorted from worst to best
-    top = True
+        self.items = []
+        self.comps = []
 
-    while l1 and l2:
-        # Alternate between taking from the top and bottom of the lists
-        if top:
-            op1 = l1[0]
-            op2 = l2[0]
-            # Take user's favorite and add it to the topList
-            t += 1
-            if getChoice(op1, op2):
-                topList.append(op1)
-                l1.remove(op1)
-            else:
-                topList.append(op2)
-                l2.remove(op2)
+        if choice == 'l':
+            self.load()
         else:
-            op1 = l1[-1]
-            op2 = l2[-1]
-            # Take user's least favorite and add it to the botList
-            t += 1
-            if not getChoice(op1, op2):
-                botList.append(op1)
-                l1.remove(op1)
+            fname = input('Input file name: ')
+            self.items = [line.strip('\n') for line in open(fname)]
+            for i in range(len(self.items)):
+                self.comps.append([0]*len(self.items))
+
+    def load(self):
+        """
+        File structure:
+        <number of items>
+        <items, one per line>
+        <array of comps, items separated by spaces, rows separated by newlines>
+        :return:
+        """
+        fname = input("Load file name: ")
+
+        with open(fname, 'r') as infile:
+            nitems = int(infile.readline()[:-1])
+            for i in range(nitems):
+                self.items.append(infile.readline()[:-1])
+            for i in range(nitems):
+                lst = infile.readline()[:-1].split(' ')
+                self.comps.append([int(i) for i in lst])
+
+
+    def save(self):
+        fname = input("Save file name: ")
+        with open(fname, 'w+') as outfile:
+            outfile.write(str(len(self.items)) + '\n')
+            outfile.write('\n'.join(self.items) + '\n')
+            for row in self.comps:
+                outfile.write(' '.join([str(i) for i in row]) + '\n')
+
+    def output(self):
+        items = []
+
+        for i, name in enumerate(self.items):
+            items.append({'name': name, 'score': sum(self.comps[i])})
+
+        items.sort(key=lambda x: x['score'], reverse=True)
+
+        fname = input('Output file name: ')
+        with open(fname, 'w+') as outfile:
+            for item in items:
+                outfile.write(item['name'] + '\n')
+
+    def sort(self):
+        done = False
+        while not done:
+            x = 0
+            y = 0
+            while x == y or self.comps[x][y] != 0:
+                x = randint(0, len(self.items)-1)
+                y = randint(0, len(self.items)-1)
+
+            resp = self.getChoice(x, y)
+            if resp == 'save':
+                return 'save'
+            high = resp
+            if high == x:
+                low = y
             else:
-                botList.append(op2)
-                l2.remove(op2)
-        top = not top
+                low = x
+            self.comps[high][low] = 1
+            self.comps[low][high] = -1
+            self.checkCascade(high, low)
 
-    if l1:
-        topList.extend(l1)
-    elif l2:
-        topList.extend(l2)
+            done = self.checkDone()
+        return 'done'
 
-    lists.pop(idx2)
-    lists.pop(idx1)
-    return topList + botList[::-1]
+    def checkCascade(self, high, low):
+        for i in range(len(self.items)):
+            if i not in [high, low]:
+                if self.comps[i][high] > 0:
+                    self.comps[i][low] = 1
+                    self.comps[low][i] = -1
+                if self.comps[i][low] < 0:
+                    self.comps[i][high] = -1
+                    self.comps[high][i] = 1
 
+    def getChoice(self, x, y):
+        """ Returns x, y, or save
+            x and y are integers, indexes into the items list
+        """
+        op1 = self.items[x]
+        op2 = self.items[y]
+        let1 = op1[0].lower()
+        let2 = op2[0].lower()
 
-def main():
-    items = [line.strip('\n') for line in open('input.txt')]
+        i = 0
+        while (let1 == let2):
+            i += 1
+            let2 = op2[i].lower()
 
-    pow2 = 1    # pow2 = largest power of 2 less than or equal to len(items)
-    while pow2 <= len(items):
-        pow2 *= 2
-    pow2 //= 2
+        c = ''
+        while c.lower() not in [let1, let2, 'save']:
+            c = input('[' + let1 + '] ' + op1 + ' or [' + let2 + '] ' + op2 + '\n')
 
-    lists = [[i] for i in items]
-    shuffle(lists)
+        if c.lower() == let1:
+            return x
+        elif c.lower() == let2:
+            return y
+        else:
+            return c
 
-    # Get lists down to a power of 2
-    i = 0
-    while len(lists) > pow2:
-        lists.append(merge(lists, i, i+1))
-
-    newLists = []
-    while len(lists) > 1:
-        while len(lists) > 1:
-            lists.sort(key=len)
-            newLists.append(merge(lists, 0, len(lists)-1))
-        lists = newLists
-        newLists = []
-
-    with open('output.txt', 'w+') as outfile:
-        for i in lists[0]:
-            outfile.write(i + '\n')
+    def checkDone(self):
+        for x in range(len(self.items)):
+            for y in range(len(self.items)):
+                if x != y and self.comps[x][y] == 0:
+                    return False
+        return True
 
 
 if __name__ == '__main__':
-    main()
-    """
-    avg = 0
-    for i in range(100):
-        main()
-        avg += t
-        t = 0
-    avg /= 100
-    print(avg)
-    """
+    hs = HumanSort()
+    resp = hs.sort()
+    if resp == 'save':
+        hs.save()
+    elif resp == 'done':
+        hs.output()
